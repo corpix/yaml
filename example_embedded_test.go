@@ -18,6 +18,7 @@ type StructB struct {
 	// Embedded structs are not treated as embedded in YAML by default. To do that,
 	// add the ",inline" annotation below
 	StructA `yaml:",inline"`
+	A       string `yaml:"a"`
 	B       string `yaml:"b"`
 }
 
@@ -35,7 +36,16 @@ func ExampleUnmarshal_embedded() {
 	}
 	fmt.Println(b.A)
 	fmt.Println(b.B)
+
+	buf, err := yaml.Marshal(b)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(string(buf))
+
 	// Output:
 	// a string from struct A
 	// a string from struct B
+	// a: a string from struct A
+	// b: a string from struct B
 }

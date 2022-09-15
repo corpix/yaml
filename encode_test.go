@@ -487,19 +487,15 @@ var marshalErrorTests = []struct {
 	value interface{}
 	error string
 	panic string
-}{{
-	value: &struct {
-		B       int
-		inlineB ",inline"
-	}{1, inlineB{2, inlineC{3}}},
-	panic: `Duplicated key "b" in struct "struct \{ B int; .*`,
-}, {
-	value: &struct {
-		A int
-		B map[string]int ",inline"
-	}{1, map[string]int{"a": 2}},
-	panic: `Can't have key "a" in inlined map; conflicts with struct field`,
-}}
+}{
+	{
+		value: &struct {
+			A int
+			B map[string]int ",inline"
+		}{1, map[string]int{"a": 2}},
+		panic: `Can't have key "a" in inlined map; conflicts with struct field`,
+	},
+}
 
 func (s *S) TestMarshalErrors(c *C) {
 	for _, item := range marshalErrorTests {

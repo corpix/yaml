@@ -212,13 +212,14 @@ func (e *encoder) structv(tag string, in reflect.Value) {
 	}
 	e.mappingv(tag, func() {
 	structLoop:
-		for _, info := range sinfo.FieldsList {
+		for _, info := range sinfo.FieldsMap {
+			fieldInfo := info[len(info)-1]
 			var value reflect.Value
-			if info.Inline == nil {
-				value = in.Field(info.Num)
+			if fieldInfo.Inline == nil {
+				value = in.Field(fieldInfo.Num)
 			} else {
 				value = in
-				for _, n := range info.Inline {
+				for _, n := range fieldInfo.Inline {
 					if value.Kind() == reflect.Ptr {
 						if value.IsNil() {
 							continue structLoop
@@ -228,11 +229,11 @@ func (e *encoder) structv(tag string, in reflect.Value) {
 					value = value.Field(n)
 				}
 			}
-			if info.OmitEmpty && isZero(value) {
+			if fieldInfo.OmitEmpty && isZero(value) {
 				continue
 			}
-			e.marshal("", reflect.ValueOf(info.Key))
-			e.flow = info.Flow
+			e.marshal("", reflect.ValueOf(fieldInfo.Key))
+			e.flow = fieldInfo.Flow
 			e.marshal("", value)
 		}
 		if sinfo.InlineMap >= 0 {

@@ -282,7 +282,7 @@ func (e *TypeError) Error() string {
 // structInfo holds details for the serialization of fields of
 // a given struct.
 type structInfo struct {
-	FieldsMap  map[string]fieldInfo
+	FieldsMap  map[string][]fieldInfo
 	FieldsList []fieldInfo
 
 	// InlineMap is the number of the field in the struct that
@@ -315,7 +315,7 @@ func getStructInfo(st reflect.Type) (*structInfo, error) {
 	}
 
 	n := st.NumField()
-	fieldsMap := make(map[string]fieldInfo)
+	fieldsMap := make(map[string][]fieldInfo)
 	fieldsList := make([]fieldInfo, 0, n)
 	inlineMap := -1
 	for i := 0; i != n; i++ {
@@ -372,16 +372,13 @@ func getStructInfo(st reflect.Type) (*structInfo, error) {
 					return nil, err
 				}
 				for _, finfo := range sinfo.FieldsList {
-					if _, found := fieldsMap[finfo.Key]; found {
-						return nil, fmt.Errorf("Duplicated key %q in struct %q", finfo.Key, st.String())
-					}
 					if finfo.Inline == nil {
 						finfo.Inline = []int{i, finfo.Num}
 					} else {
 						finfo.Inline = append([]int{i}, finfo.Inline...)
 					}
 					finfo.Id = len(fieldsList)
-					fieldsMap[finfo.Key] = finfo
+					fieldsMap[finfo.Key] = append(fieldsMap[finfo.Key], finfo)
 					fieldsList = append(fieldsList, finfo)
 				}
 			default:
@@ -396,13 +393,9 @@ func getStructInfo(st reflect.Type) (*structInfo, error) {
 			info.Key = strings.ToLower(field.Name)
 		}
 
-		if _, found = fieldsMap[info.Key]; found {
-			return nil, fmt.Errorf("Duplicated key %q in struct %q", info.Key, st.String())
-		}
-
 		info.Id = len(fieldsList)
 		fieldsList = append(fieldsList, info)
-		fieldsMap[info.Key] = info
+		fieldsMap[info.Key] = append(fieldsMap[info.Key], info)
 	}
 
 	sinfo = &structInfo{

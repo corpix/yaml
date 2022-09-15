@@ -751,20 +751,22 @@ func (d *decoder) mappingStruct(n *node, out reflect.Value) (good bool) {
 			continue
 		}
 		if info, ok := sinfo.FieldsMap[name.String()]; ok {
-			if d.strict {
-				if doneFields[info.Id] {
-					d.terrors = append(d.terrors, fmt.Sprintf("line %d: field %s already set in type %s", ni.line+1, name.String(), out.Type()))
-					continue
+			for _, fieldInfo := range info {
+				if d.strict {
+					if doneFields[fieldInfo.Id] {
+						d.terrors = append(d.terrors, fmt.Sprintf("line %d: field %s already set in type %s", ni.line+1, name.String(), out.Type()))
+						continue
+					}
+					doneFields[fieldInfo.Id] = true
 				}
-				doneFields[info.Id] = true
+				var field reflect.Value
+				if fieldInfo.Inline == nil {
+					field = out.Field(fieldInfo.Num)
+				} else {
+					field = fieldByIndex(out, fieldInfo.Inline)
+				}
+				d.unmarshal(n.children[i+1], field)
 			}
-			var field reflect.Value
-			if info.Inline == nil {
-				field = out.Field(info.Num)
-			} else {
-				field = fieldByIndex(out, info.Inline)
-			}
-			d.unmarshal(n.children[i+1], field)
 		} else if sinfo.InlineMap != -1 {
 			if inlineMap.IsNil() {
 				inlineMap.Set(reflect.MakeMap(inlineMap.Type()))
